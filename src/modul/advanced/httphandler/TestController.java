@@ -1,7 +1,6 @@
 package modul.advanced.httphandler;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,27 +22,32 @@ public class TestController {
     static class MyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            String requestUrl = "" +t.getRequestURI();
+            String requestUrl = "" + t.getRequestURI();
             Method[] methods = RouteHandlers.class.getMethods();
-            for(Method method:methods){
+            for (Method method : methods) {
                 Annotation[] annotations = method.getDeclaredAnnotations();
-                for (Annotation annotation:annotations) {
-                    if(annotation instanceof WebRoute){
-                        WebRoute myAnnotation = (WebRoute) annotation;
-                        if(myAnnotation.value().equals(requestUrl)){
-                            try {
-                                method.invoke(null,t);
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                                e.printStackTrace();
-                            }
-                            break;
-                        }
-                    }
+                for (Annotation annotation : annotations) {
+                    if (isWebRoute(t, requestUrl, method, annotation)) break;
                 }
             }
         }
+    }
+
+    private static boolean isWebRoute(HttpExchange t, String requestUrl, Method method, Annotation annotation) {
+        if (annotation instanceof WebRoute) {
+            WebRoute myAnnotation = (WebRoute) annotation;
+            if (myAnnotation.value().equals(requestUrl)) {
+                try {
+                    method.invoke(null, t);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
 }
